@@ -3,6 +3,8 @@ from config import Config
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def load_data(filename):
@@ -59,3 +61,10 @@ if __name__ == '__main__':
         # [batch_size, 1, 28, 28]
         print(label.size())
         # [batch_size,]
+
+        # plot sample
+        for i in range(10):
+            img_arr = img[i].numpy().reshape(28, 28)
+            plt.subplot(2, 5, i+1)
+            plt.imshow(img_arr, cmap='gray')
+        plt.show()

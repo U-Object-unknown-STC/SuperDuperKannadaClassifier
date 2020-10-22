@@ -30,7 +30,7 @@ class SuperDuperClassifier(nn.Module):
 
     def forward(self, x):
         out = self.fc1(x)
-        out = nn.functional.relu(out)
+        # out = nn.functional.relu(out)
         out = self.fc2(out)
         return out
 

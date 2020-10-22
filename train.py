@@ -4,6 +4,7 @@ from torch import optim
 from config import Config
 import utils
 from model import *
+import matplotlib.pyplot as plt
 
 
 def train():
@@ -17,14 +18,20 @@ def train():
     F = nn.Sequential(
         nn.Linear(28 * 28, 256),
         nn.ReLU(),
-        nn.Dropout(0.5),
+        nn.Dropout(0.7),
         nn.Linear(256, 128)
     )
     R = nn.Sequential(
         nn.Linear(128, 256),
+        nn.Dropout(0.7),
         nn.Linear(256, 28 * 28)
     )
     C = SuperDuperClassifier()
+
+    # load pretrained model
+    # F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
+    # R.load_state_dict(torch.load(Config.checkpoint + 'R.pth'))
+    # C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
 
     F.to(Config.device)
     R.to(Config.device)
@@ -37,6 +44,10 @@ def train():
     criterion = nn.CrossEntropyLoss()
 
     accuracy = 0
+
+    # plot training route for each epoch
+    plot_loss = []
+    plot_acc = []
 
     print('Training...')
     for epoch in range(Config.num_epoch):
@@ -71,13 +82,32 @@ def train():
             pred_label = pred.argmax(1)
             accuracy = (pred_label == label).sum().item() / label.size(0)
 
+            # plot history
+            plot_loss.append(loss.item())
+            plot_acc.append(accuracy)
+
+        plt.figure('Accuracy & Loss')
+        # assume that num_epoch = 10
+        plt.subplot(2, 5, epoch + 1)
+        plt.ylim(0.0, 3.2)
+        plt.plot(plot_loss, label='Loss')
+        plt.plot(plot_acc, label='Accuracy')
+        plt.xlabel('Batch')
+        plt.title('Epoch {}'.format(epoch))
+        plt.legend()
+        # reset
+        plot_loss = []
+        plot_acc = []
+
         print('Epoch: {}, Loss_s: {}, Loss_r: {}, Accuracy: {}'.format(epoch, loss_s, loss_r, accuracy))
 
+    plt.show()
     print('Done!')
 
-    torch.save(F.state_dict(), './checkpoint/F.pth')
-    torch.save(R.state_dict(), './checkpoint/R.pth')
-    torch.save(C.state_dict(), './checkpoint/C.pth')
+    # save model
+    torch.save(F.state_dict(), Config.checkpoint + 'F.pth')
+    torch.save(R.state_dict(), Config.checkpoint + 'R.pth')
+    torch.save(C.state_dict(), Config.checkpoint + 'C.pth')
 
 
 if __name__ == '__main__':

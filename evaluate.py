@@ -15,11 +15,12 @@ def evaluate():
     F = nn.Sequential(
         nn.Linear(28 * 28, 256),
         nn.ReLU(),
-        nn.Dropout(0.5),
+        nn.Dropout(0.7),
         nn.Linear(256, 128)
     )
     R = nn.Sequential(
         nn.Linear(128, 256),
+        nn.Dropout(0.7),
         nn.Linear(256, 28 * 28)
     )
     C = SuperDuperClassifier()
@@ -53,6 +54,7 @@ def evaluate():
     pred_label = pred.argmax(1)
     accuracy = (pred_label == label).sum().item() / label.size(0)
     print('Test Accuracy: {}'.format(accuracy))
+
 
 if __name__ == '__main__':
     evaluate()
