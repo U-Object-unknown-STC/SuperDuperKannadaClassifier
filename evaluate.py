@@ -9,6 +9,7 @@ from model import *
 def evaluate():
     # test_loader = utils.data_loader('Dig-MNIST')
     data = utils.load_data('Dig-MNIST')
+    data = torch.from_numpy(data)
     img = data[:, 1:].float() / 255
     label = data[:, 0].long()
 

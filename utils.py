@@ -10,14 +10,14 @@ import numpy as np
 def load_data(filename):
     """
     :param filename: name of csv file
-    :return: tensor of size [N, 785]
+    :return: numpy array of shape (N, 785)
     """
     data_df = pd.read_csv(Config.base_dir + filename + '.csv')
     # print(type(data_df))   # DataFrame
     # print(type(data_df.values))    # numpy array
     # print(data_df.values.shape)    # (N, 785)
-    data = torch.from_numpy(data_df.values)
-    return data
+    # data = torch.from_numpy(data_df.values)
+    return data_df.values
 
 
 class KannadaDataset(Dataset):
@@ -32,13 +32,15 @@ class KannadaDataset(Dataset):
         if torch.is_tensor(item):
             item = item.tolist()
 
-        image = self.data[item, 1:].view(-1, 28, 28).float() / 255
-        # image size: [1, 28, 28]
-        label = self.data[item, 0].long()
+        image = self.data[item, 1:].reshape(28, 28, 1).astype(np.float32) / 255
+        # image size: [28, 28, 1]
+        label = torch.tensor(self.data[item, 0]).long()
         # label size: []
 
         if self.transform:
             image = self.transform(image)
+        else:
+            image = torch.tensor(image).float()
 
         sample = {'image': image, 'label': label}
 
@@ -46,13 +48,24 @@ class KannadaDataset(Dataset):
 
 
 def data_loader(filename):
-    dataset = KannadaDataset(csv_filename=filename)
+    trans = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ])
+    dataset = KannadaDataset(csv_filename=filename, transform=trans)
     loader = DataLoader(dataset=dataset, batch_size=Config.batch_size, shuffle=True, num_workers=0)
     return loader
 
 
 if __name__ == '__main__':
-    dataset = KannadaDataset(csv_filename='train')
+    trans = transforms.Compose([
+        transforms.ToPILImage(),
+        # transforms.RandomCrop(26),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ])
+    dataset = KannadaDataset(csv_filename='Dig-MNIST', transform=trans)
     loader = DataLoader(dataset=dataset, batch_size=Config.batch_size, shuffle=True, num_workers=0)
     for idx, batch in enumerate(loader):
         img = batch['image']
