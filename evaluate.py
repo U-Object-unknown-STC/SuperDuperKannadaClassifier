@@ -11,19 +11,10 @@ def evaluate():
     data = utils.load_data('Dig-MNIST')
     data = torch.from_numpy(data)
     img = data[:, 1:].float() / 255
+    img = img.view(-1, 1, 28, 28)
     label = data[:, 0].long()
 
-    F = nn.Sequential(
-        nn.Linear(28 * 28, 256),
-        nn.ReLU(),
-        nn.Dropout(0.7),
-        nn.Linear(256, 128)
-    )
-    R = nn.Sequential(
-        nn.Linear(128, 256),
-        nn.Dropout(0.7),
-        nn.Linear(256, 28 * 28)
-    )
+    F = SuperDuperFeatureExtractor()
     C = SuperDuperClassifier()
 
     F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))

@@ -14,32 +14,17 @@ def train():
     print('Done!')
 
     # model
-    # F = SuperDuperFeatureExtractor()
-    # R = SuperDuperReconstructor()
-    F = nn.Sequential(
-        nn.Linear(28 * 28, 256),
-        nn.ReLU(),
-        nn.Dropout(0.7),
-        nn.Linear(256, 128)
-    )
-    R = nn.Sequential(
-        nn.Linear(128, 256),
-        nn.Dropout(0.7),
-        nn.Linear(256, 28 * 28)
-    )
+    F = SuperDuperFeatureExtractor()
     C = SuperDuperClassifier()
 
     # load pretrained model
     # F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
-    # R.load_state_dict(torch.load(Config.checkpoint + 'R.pth'))
     # C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
 
     F.to(Config.device)
-    R.to(Config.device)
     C.to(Config.device)
 
     op_F = optim.Adam(F.parameters(), lr=Config.learning_rate)
-    op_R = optim.Adam(R.parameters(), lr=Config.learning_rate)
     op_C = optim.Adam(C.parameters(), lr=Config.learning_rate)
 
     criterion = nn.CrossEntropyLoss()
@@ -58,25 +43,21 @@ def train():
             label = batch['label'].to(Config.device)
             # label: [batch_size,]
 
-            img = img.view(-1, 28 * 28)
+            # img = img.view(-1, 28 * 28)
 
             feat = F(img)
-            rec = R(feat)
             pred = C(feat)
 
             loss_s = criterion(pred, label)
-            loss_r = 1e-4 * ((img - rec) ** 2).sum()
 
-            loss = loss_s + loss_r
+            loss = loss_s
 
             op_F.zero_grad()
-            op_R.zero_grad()
             op_C.zero_grad()
 
             loss.backward()
 
             op_F.step()
-            op_R.step()
             op_C.step()
 
             # accuracy
@@ -100,14 +81,13 @@ def train():
         plot_loss = []
         plot_acc = []
 
-        print('Epoch: {}, Loss_s: {}, Loss_r: {}, Accuracy: {}'.format(epoch, loss_s, loss_r, accuracy))
+        print('Epoch: {}, Loss_s: {}, Accuracy: {}'.format(epoch, loss_s, accuracy))
 
     plt.show()
     print('Done!')
 
     # save model
     torch.save(F.state_dict(), Config.checkpoint + 'F.pth')
-    torch.save(R.state_dict(), Config.checkpoint + 'R.pth')
     torch.save(C.state_dict(), Config.checkpoint + 'C.pth')
 
 
