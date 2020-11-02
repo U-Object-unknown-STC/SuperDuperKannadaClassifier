@@ -9,13 +9,16 @@ from model import *
 def evaluate():
     # test_loader = utils.data_loader('Dig-MNIST')
     data = utils.load_data('Dig-MNIST')
-    data = torch.from_numpy(data)
+    data = torch.from_numpy(data).to(Config.device)
+    num_sample = 1000
+    idx = torch.randint(data.size(0), size=(num_sample,))
+    data = data[idx, :]
     img = data[:, 1:].float() / 255
     img = img.view(-1, 1, 28, 28)
     label = data[:, 0].long()
 
-    F = SuperDuperFeatureExtractor()
-    C = SuperDuperClassifier()
+    F = SuperDuperFeatureExtractor().to(Config.device)
+    C = SuperDuperClassifier().to(Config.device)
 
     F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
     C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))

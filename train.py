@@ -18,8 +18,8 @@ def train():
     C = SuperDuperClassifier()
 
     # load pretrained model
-    # F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
-    # C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
+    F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
+    C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
 
     F.to(Config.device)
     C.to(Config.device)
