@@ -6,11 +6,12 @@ from config import Config
 import utils
 from model import *
 import matplotlib.pyplot as plt
+from metric import *
 
 
 def train():
     print('Load training data...')
-    train_loader = utils.data_loader('train')
+    train_loader = utils.data_loader('train', 'test')
     print('Done!')
 
     # model
@@ -30,26 +31,32 @@ def train():
 
     criterion = nn.CrossEntropyLoss()
 
-    accuracy = 0
+    accuracy_s = accuracy_t = 0
 
     # plot training route
     plot_loss = []
-    plot_acc = []
+    plot_s_acc = []
+    plot_t_acc = []
 
     print('Training...')
     for epoch in range(Config.num_epoch):
         for idx, batch in enumerate(train_loader):
-            img = batch['image'].to(Config.device)
+            s_img = batch['source_image'].to(Config.device)
+            t_img = batch['target_image'].to(Config.device)
             # img: [batch_size, 1, 28, 28]
-            label = batch['label'].to(Config.device)
+            s_label = batch['source_label'].to(Config.device)
+            t_label = batch['source_label'].to(Config.device)
             # label: [batch_size,]
 
-            feat = F(img)
-            pred = C(feat)
+            feat_s = F(s_img)
+            feat_t = F(t_img)
+            pred_s = C(feat_s)
+            pred_t = C(feat_t)
 
-            loss_s = criterion(pred, label)
+            loss_s = criterion(pred_s, s_label)
+            loss_msda = k_moment([feat_t, feat_s], k=4)
 
-            loss = loss_s
+            loss = loss_s + Config.lambda_msda * loss_msda
 
             op_F.zero_grad()
             op_C.zero_grad()
@@ -60,20 +67,26 @@ def train():
             op_C.step()
 
             # accuracy
-            pred_label = pred.argmax(1)
-            accuracy = (pred_label == label).sum().item() / label.size(0)
+            pred_label_s = pred_s.argmax(1)
+            accuracy_s = (pred_label_s == s_label).sum().item() / s_label.size(0)
+            pred_label_t = pred_t.argmax(1)
+            accuracy_t = (pred_label_t == t_label).sum().item() / t_label.size(0)
 
             # plot history
             plot_loss.append(loss.item())
-            plot_acc.append(accuracy)
+            plot_s_acc.append(accuracy_s)
+            plot_t_acc.append(accuracy_t)
 
-        print('Epoch: {}, Loss_s: {}, Accuracy: {}'.format(epoch, loss_s, accuracy))
+        print('Epoch: {}, Loss_s: {}, Loss_msda: {}, Accuracy_s: {}, Accuracy_t: {}'.format(
+            epoch, loss_s, loss_msda, accuracy_s, accuracy_t
+        ))
 
     if Config.enable_plot:
         plt.figure('Accuracy & Loss')
         plt.ylim(0.0, 3.2)
         plt.plot(plot_loss, label='Loss')
-        plt.plot(plot_acc, label='Accuracy')
+        plt.plot(plot_s_acc, label='Source Accuracy')
+        plt.plot(plot_t_acc, label='Target Accuracy')
         plt.xlabel('Batch')
         plt.title('Train Accuracy & Loss')
         plt.legend()

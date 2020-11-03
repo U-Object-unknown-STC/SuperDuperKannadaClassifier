@@ -21,41 +21,53 @@ def load_data(filename):
 
 
 class KannadaDataset(Dataset):
-    def __init__(self, csv_filename, transform=None):
-        self.data = load_data(csv_filename)
+    def __init__(self, source_csv_filename, target_csv_filename, transform=None):
+        self.source_data = load_data(source_csv_filename)
+        self.target_data = load_data(target_csv_filename)
         self.transform = transform
 
     def __len__(self):
-        return len(self.data)
+        # fixme: probably with bugs
+        min_len = min(len(self.source_data), len(self.target_data))
+        return min_len
 
     def __getitem__(self, item):
         if torch.is_tensor(item):
             item = item.tolist()
 
-        image = self.data[item, 1:].reshape(28, 28, 1).astype(np.float32) / 255
+        source_image = self.source_data[item, 1:].reshape(28, 28, 1).astype(np.float32) / 255
+        target_image = self.target_data[item, 1:].reshape(28, 28, 1).astype(np.float32) / 255
         # image size: [28, 28, 1]
-        label = torch.tensor(self.data[item, 0]).long()
+        source_label = torch.tensor(self.source_data[item, 0]).long()
+        target_label = torch.tensor(self.target_data[item, 0]).long()
         # label size: []
 
+        # do not augment target sample
         if self.transform:
-            image = self.transform(image)
+            source_image = self.transform(source_image)
         else:
-            image = torch.tensor(image).float()
+            source_image = torch.tensor(source_image.reshape(-1, 28, 28)).float()
+        target_image = torch.tensor(target_image.reshape(-1, 28, 28)).float()
 
-        sample = {'image': image, 'label': label}
+        sample = {
+            'source_image': source_image,
+            'source_label': source_label,
+            'target_image': target_image,
+            'target_label': target_label
+        }
 
         return sample
 
 
-def data_loader(filename):
+def data_loader(source, target):
     trans = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomRotation(30),
-        transforms.ToTensor(),
+        transforms.ToTensor()
         # handle with caution
-        transforms.RandomErasing()
+        # transforms.RandomErasing()
     ])
-    dataset = KannadaDataset(csv_filename=filename, transform=trans)
+    dataset = KannadaDataset(source_csv_filename=source, target_csv_filename=target, transform=trans)
     loader = DataLoader(dataset=dataset, batch_size=Config.batch_size, shuffle=True, num_workers=0)
     return loader
 
@@ -64,21 +76,32 @@ if __name__ == '__main__':
     trans = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomRotation(30),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.RandomErasing()
     ])
-    dataset = KannadaDataset(csv_filename='Dig-MNIST', transform=trans)
+    dataset = KannadaDataset(source_csv_filename='train', target_csv_filename='Dig-MNIST', transform=trans)
     loader = DataLoader(dataset=dataset, batch_size=Config.batch_size, shuffle=True, num_workers=0)
     for idx, batch in enumerate(loader):
-        img = batch['image']
-        label = batch['label']
-        print(img.size())
+        s_img = batch['source_image']
+        t_img = batch['target_image']
+        s_label = batch['source_label']
+        t_label = batch['target_label']
+        print(s_img.size())
         # [batch_size, 1, 28, 28]
-        print(label.size())
+        print(s_label.size())
         # [batch_size,]
 
         # plot sample
+        plt.figure('Source')
         for i in range(10):
-            img_arr = img[i].numpy().reshape(28, 28)
+            s_img_arr = s_img[i].numpy().reshape(28, 28)
             plt.subplot(2, 5, i+1)
-            plt.imshow(img_arr, cmap='gray')
+            plt.imshow(s_img_arr, cmap='gray')
+        plt.show()
+
+        plt.figure('Target')
+        for i in range(10):
+            t_img_arr = t_img[i].numpy().reshape(28, 28)
+            plt.subplot(2, 5, i+1)
+            plt.imshow(t_img_arr, cmap='gray')
         plt.show()
