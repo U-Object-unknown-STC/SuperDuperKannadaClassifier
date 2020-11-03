@@ -51,7 +51,9 @@ def data_loader(filename):
     trans = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomRotation(30),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        # handle with caution
+        transforms.RandomErasing()
     ])
     dataset = KannadaDataset(csv_filename=filename, transform=trans)
     loader = DataLoader(dataset=dataset, batch_size=Config.batch_size, shuffle=True, num_workers=0)
@@ -61,7 +63,6 @@ def data_loader(filename):
 if __name__ == '__main__':
     trans = transforms.Compose([
         transforms.ToPILImage(),
-        # transforms.RandomCrop(26),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ])

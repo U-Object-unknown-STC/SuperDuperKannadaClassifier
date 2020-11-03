@@ -18,8 +18,9 @@ def train():
     C = SuperDuperClassifier()
 
     # load pretrained model
-    F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
-    C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
+    if Config.use_pretrain:
+        F.load_state_dict(torch.load(Config.checkpoint + 'F.pth'))
+        C.load_state_dict(torch.load(Config.checkpoint + 'C.pth'))
 
     F.to(Config.device)
     C.to(Config.device)
@@ -31,7 +32,7 @@ def train():
 
     accuracy = 0
 
-    # plot training route for each epoch
+    # plot training route
     plot_loss = []
     plot_acc = []
 
@@ -42,8 +43,6 @@ def train():
             # img: [batch_size, 1, 28, 28]
             label = batch['label'].to(Config.device)
             # label: [batch_size,]
-
-            # img = img.view(-1, 28 * 28)
 
             feat = F(img)
             pred = C(feat)
@@ -68,22 +67,18 @@ def train():
             plot_loss.append(loss.item())
             plot_acc.append(accuracy)
 
+        print('Epoch: {}, Loss_s: {}, Accuracy: {}'.format(epoch, loss_s, accuracy))
+
+    if Config.enable_plot:
         plt.figure('Accuracy & Loss')
-        # assume that num_epoch = 10
-        plt.subplot(2, 5, epoch + 1)
         plt.ylim(0.0, 3.2)
         plt.plot(plot_loss, label='Loss')
         plt.plot(plot_acc, label='Accuracy')
         plt.xlabel('Batch')
-        plt.title('Epoch {}'.format(epoch))
+        plt.title('Train Accuracy & Loss')
         plt.legend()
-        # reset
-        plot_loss = []
-        plot_acc = []
+        plt.show()
 
-        print('Epoch: {}, Loss_s: {}, Accuracy: {}'.format(epoch, loss_s, accuracy))
-
-    plt.show()
     print('Done!')
 
     # save model
