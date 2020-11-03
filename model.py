@@ -34,10 +34,12 @@ class SuperDuperClassifier(nn.Module):
     def __init__(self):
         super(SuperDuperClassifier, self).__init__()
         self.fc1 = nn.Linear(2048, 512)
+        self.bn = nn.BatchNorm1d(512)
         self.fc2 = nn.Linear(512, 10)
 
     def forward(self, x):
         out = self.fc1(x)
-        # out = nn.functional.relu(out)
+        out = F.leaky_relu(out)
+        out = self.bn(out)
         out = self.fc2(out)
         return out

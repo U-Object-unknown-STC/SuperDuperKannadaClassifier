@@ -12,7 +12,7 @@ class Config:
     enable_plot = True
 
     # hyper parameters
-    batch_size = 1024
+    batch_size = 512
     learning_rate = 1e-3
-    num_epoch = 100 if sys.platform.startswith('win') else 40
+    num_epoch = 40 if sys.platform.startswith('win') else 40
     lambda_msda = 1e-1
