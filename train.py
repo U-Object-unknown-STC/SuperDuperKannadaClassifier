@@ -11,7 +11,7 @@ from metric import *
 
 def train():
     print('Load training data...')
-    train_loader = utils.data_loader('train', 'Dig-MNIST')
+    train_loader = utils.data_loader('train', 'test')
     print('Done!')
 
     # model
